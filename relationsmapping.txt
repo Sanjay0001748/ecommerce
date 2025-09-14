@@ -1,0 +1,184 @@
+ User- id (PK)- name- email- role (CUSTOMER, SELLER, ADMIN)- password- phone- createdAt
+ Category- id (PK)- name- description
+ Product- id (PK)- name- description- price- stockQuantity- seller_id (FK → User)- category_id (FK → Category)
+ Review- id (PK)- rating (1–5)- comment- user_id (FK → User)- product_id (FK → Product)- createdAt
+ Cart- id (PK)- user_id (FK → User, unique)
+ CartItem- id (PK)- cart_id (FK → Cart)- product_id (FK → Product)
+- quantity
+ Order- id (PK)- orderNumber- status (PLACED, CONFIRMED, SHIPPED, DELIVERED, CANCELLED)- user_id (FK → User)- createdAt- updatedAt
+ OrderItem- id (PK)- order_id (FK → Order)- product_id (FK → Product)- quantity- priceAtPurchase
+ Payment- id (PK)- amount- method (CREDIT_CARD, UPI, NET_BANKING, COD)- status (PENDING, SUCCESS, FAILED, REFUNDED)- order_id (FK → Order)- createdAt
+ Shipment- id (PK)- trackingNumber- carrier (FedEx, DHL, etc.)- status (PENDING, IN_TRANSIT, DELIVERED)- order_id (FK → Order)
+ Relations Recap- User (Customer) → Cart (1:1)- User (Customer) → Order (1:M)- User (Seller) → Product (1:M)- Category → Product (1:M)- Product → Review (1:M)- Cart → CartItem (1:M)- Order → OrderItem (1:M)- Order → Payment (1:1)- Order → Shipment (1:1
+
+ **E-Commerce Backend Project Guide**
+
+ ---
+
+ # 1. Entities & Relationships
+
+ ## Users
+
+ * Fields: id, name, email, role (CUSTOMER, SELLER, ADMIN), password, phone, createdAt
+ * Relations:
+
+   * 1:1 → Cart
+   * 1\:M → Orders
+   * 1\:M → Products (if seller)
+   * 1\:M → Reviews
+
+ ## Category
+
+ * Fields: id, name, description
+ * Relations: 1\:M → Products
+
+ ## Product
+
+ * Fields: id, name, description, price, stockQuantity
+ * Relations:
+
+   * M:1 → Category
+   * M:1 → Seller (Users)
+   * 1\:M → Reviews
+   * 1\:M → OrderItems
+   * M:1 → CartItems
+
+ ## Reviews
+
+ * Fields: id, rating, comment, createdAt
+ * Relations: M:1 → Product, M:1 → User
+
+ ## Cart
+
+ * Fields: id
+ * Relations: 1:1 → User, 1\:M → CartItems
+
+ ## CartItems
+
+ * Fields: id, quantity
+ * Relations: M:1 → Cart, M:1 → Product
+
+ ## Order
+
+ * Fields: id, orderNumber, status (PLACED, CONFIRMED, SHIPPED, DELIVERED, CANCELLED), createdAt, updatedAt
+ * Relations: M:1 → User, 1\:M → OrderItems, 1:1 → Payment, 1:1 → Shipment
+
+ ## OrderItems
+
+ * Fields: id, quantity, priceAtPurchase
+ * Relations: M:1 → Order, M:1 → Product
+
+ ## Payment
+
+ * Fields: id, paymentAmount, paymentMethod (CREDIT\_CARD, UPI, NET\_BANKING, COD), paymentStatus (PENDING, SUCCESS, FAILED, REFUNDED), createdAt
+ * Relations: 1:1 → Order
+
+ ## Shipment
+
+ * Fields: id, trackingNumber, carrier, status (PENDING, IN\_TRANSIT, DELIVERED)
+ * Relations: 1:1 → Order
+
+ ---
+
+ # 2. Basic APIs (Mini E-Commerce)
+
+ ## User Management
+
+ * `POST /api/users/register` → Register a user
+ * `POST /api/auth/login` → Authenticate user and get JWT token
+ * `GET /api/users/{id}` → Fetch user profile
+
+ ## Product & Category
+
+ * `GET /api/products` → List all products
+ * `GET /api/products/{id}` → Fetch product by ID
+ * `GET /api/categories` → List all categories
+ * `GET /api/products/search` → Search products with optional filte
+
+
+ rs (categoryId, minPrice, maxPrice, sortBy)
+
+ ## Cart
+
+ * `POST /api/carts/{userId}/items` → Add product to cart
+ * `PUT /api/carts/{userId}/items/{itemId}` → Update quantity
+ * `DELETE /api/carts/{userId}/items/{itemId}` → Remove item
+ * `GET /api/carts/{userId}` → View cart
+
+ ## Order & Checkout
+
+ * `POST /api/orders` → Checkout cart and create order
+ * `GET /api/orders/{orderId}` → Order details
+ * `GET /api/orders/history/{userId}` → Customer order history
+
+ ## Payment
+
+ * `POST /api/payments` → Attach payment to order
+ * `GET /api/payments/{orderId}` → Check payment status
+
+ ## Shipment
+
+ * `POST /api/shipments` → Create shipment
+ * `GET /api/shipments/{orderId}` → Track shipment
+
+ ## Reviews
+
+ * `POST /api/reviews` → Add review (after order delivery)
+ * `GET /api/products/{id}/reviews` → Get product reviews
+
+ ---
+
+ # 3. Advanced Features & APIs
+
+ ## 1. Product Search with Filters & Sorting
+
+ * Keyword, category, price range, seller, rating
+ * Sort by price, rating, popularity
+
+ ## 2. Top Sellers & Sales Analytics
+
+ * `GET /api/analytics/top-sellers?days=X`
+ * Track revenue, products sold, top sellers
+
+ ## 3. Abandoned Carts
+
+ * `GET /api/carts/abandoned?days=X`
+ * Find carts not converted to orders for follow-up emails
+
+ ## 4. Customer Order History with Reviews
+
+ * `GET /api/orders/history/{userId}`
+ * Return orders, products, quantities, and reviews
+
+ ## 5. Inventory Management (Low Stock)
+
+ * `GET /api/products/low-stock?threshold=X`
+ * Return products with stock below threshold
+
+ ---
+
+ # 4. Implementation Notes
+
+ * Use **DTOs** to separate API responses from entities
+ * Use **@Query** or **Specifications** for complex filters and analytics
+ * Add **pagination & sorting** for list APIs
+ * Implement **Spring Security + JWT** for role-based access
+ * Handle exceptions globally using **@ControllerAdvice**
+ * Use **background jobs** for abandoned cart notifications
+
+ ---
+
+ # 5. Relations Diagram (Recap)
+
+ ```
+ User (Customer) 1:1 Cart
+ User (Customer) 1:M Order
+ User (Seller) 1:M Product
+ Category 1:M Product
+ Product 1:M Review
+ Cart 1:M CartItem
+ CartItem M:1 Product
+ Order 1:M OrderItem
+ Order 1:1 Payment
+ Order 1:1 Shipment
+ ```
