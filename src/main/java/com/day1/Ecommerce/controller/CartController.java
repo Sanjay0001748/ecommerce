@@ -4,7 +4,10 @@ import com.day1.Ecommerce.dtos.CartDto;
 import com.day1.Ecommerce.dtos.CartItemDto;
 import com.day1.Ecommerce.models.Cart;
 import com.day1.Ecommerce.models.CartItems;
+import com.day1.Ecommerce.models.Product;
 import com.day1.Ecommerce.models.Users;
+import com.day1.Ecommerce.repository.CartRepo;
+import com.day1.Ecommerce.repository.ProductRepo;
 import com.day1.Ecommerce.repository.UserRepo;
 import com.day1.Ecommerce.service.CartService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,6 +29,10 @@ public class CartController {
     private UserRepo userRepo;
     @Autowired
     private CartService cartService;
+    @Autowired
+    private CartRepo cartRepo;
+    @Autowired
+    private ProductRepo productRepo;
 
     @PostMapping("/cart")
     public ResponseEntity<?> addProductToCart(@RequestBody @Valid CartDto cartDto) throws Exception {
@@ -47,6 +54,12 @@ public class CartController {
     {
         CartItems cartItems=new CartItems();
         cartItems.setQuantity(cartItemDto.getQuantity());
+        Users users=userRepo.findByphone(cartItemDto.getPhone()).orElseThrow(()->new RuntimeException("user not found"));
+        Cart cart=cartRepo.findByusers(users).orElseThrow(()->new RuntimeException("cart not found"));
+        cartItems.setCart(cart);
+        Product product=productRepo.findByname(cartItemDto.getProductName()).orElseThrow(()->new RuntimeException("product not found"));
+        cartItems.setProduct(product);
+        return cartService.saveCartItems(cartItems);
 
     }
 }
